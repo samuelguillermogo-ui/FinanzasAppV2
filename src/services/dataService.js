@@ -549,9 +549,42 @@ const DataService = {
     // ==========================================
     // SEED DATA (only for guest/demo mode)
     // ==========================================
-    seedIfEmpty() {
-        if (localStorage.getItem(this.KEYS.INITIALIZED)) return;
+    async seedIfEmpty() {
+        if (this.useLocalStorage) {
+            if (localStorage.getItem(this.KEYS.INITIALIZED)) return;
+            this.seedLocalStorage();
+        } else {
+            // Check if user has categories, if not, they probably need defaults
+            const categories = await this.getCategories();
+            if (categories.length === 0) {
+                await this.seedSupabaseCategories();
+            }
+        }
+    },
 
+    async seedSupabaseCategories() {
+        const defaults = [
+            { nombre: 'Alimentación', icono: '🍔', color: '#F2994A', is_default: true },
+            { nombre: 'Transporte', icono: '🚗', color: '#2F80ED', is_default: true },
+            { nombre: 'Vivienda', icono: '🏠', color: '#9B51E0', is_default: true },
+            { nombre: 'Entretenimiento', icono: '🎬', color: '#E84393', is_default: true },
+            { nombre: 'Salud', icono: '💊', color: '#EB5757', is_default: true },
+            { nombre: 'Educación', icono: '📚', color: '#2D7A4F', is_default: true },
+            { nombre: 'Suscripciones', icono: '📱', color: '#F2C94C', is_default: true },
+            { nombre: 'Otros', icono: '📦', color: '#828282', is_default: true },
+        ];
+        
+        const userId = this._getUserId();
+        const toInsert = defaults.map(c => ({ ...c, user_id: userId }));
+        
+        const { error } = await supabaseClient
+            .from('categories')
+            .insert(toInsert);
+        
+        if (error) console.error('Error seeding Supabase categories:', error);
+    },
+
+    seedLocalStorage() {
         // Default categories
         const categories = [
             { id: Helpers.uuid(), nombre: 'Alimentación', icono: '🍔', color: '#F2994A', isDefault: true },

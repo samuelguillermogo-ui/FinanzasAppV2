@@ -313,13 +313,14 @@
         display: flex !important;
         background: var(--bg-card-solid);
         border: 1px solid var(--border-color-strong);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        z-index: 101;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000 !important;
         visibility: visible !important;
         opacity: 1 !important;
         color: var(--primary);
-        min-width: 44px;
-        min-height: 44px;
+        min-width: 48px;
+        min-height: 48px;
+        position: relative;
     }
 
     .period-filters {

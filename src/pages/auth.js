@@ -184,8 +184,8 @@ const AuthPage = {
 
     enterGuestMode() {
         // Set guest mode flag and use localStorage DataService
-        window.FINANZAPP_GUEST_MODE = true;
-        DataService.useLocalStorage = true;
+        localStorage.setItem('finanzapp_guest_mode', 'true');
+        DataService.setAuthMode(true);
         DataService.seedIfEmpty();
         Helpers.showToast('Modo demo activado. Tus datos se guardan localmente.', 'success');
         App.handleAuthReady();

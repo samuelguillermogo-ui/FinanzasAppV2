@@ -229,10 +229,15 @@ const App = {
         }
     },
 
-    handleAuthReady() {
+    async handleAuthReady() {
+        // Force session refresh
+        await AuthService.getSession();
         this.navigate('dashboard');
     }
 };
+
+// Make it global for pages to access
+window.App = App;
 
 // Boot the app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => App.init());
