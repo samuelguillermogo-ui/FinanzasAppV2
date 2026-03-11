@@ -16,6 +16,10 @@ const DataService = {
         INITIALIZED: 'finanzapp_initialized'
     },
 
+    setAuthMode(useLocal) {
+        this.useLocalStorage = useLocal;
+    },
+
     // ==========================================
     // PRIVATE STORAGE HELPERS (localStorage)
     // ==========================================
