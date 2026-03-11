@@ -102,8 +102,9 @@ const App = {
         const pageModule = this.pages[page].module();
         await pageModule.render();
 
-        // Close mobile sidebar
+        // Close mobile sidebar and overlay
         document.getElementById('sidebar')?.classList.remove('open');
+        document.getElementById('sidebar-overlay')?.classList.remove('active');
 
         // Scroll to top
         document.getElementById('content-area')?.scrollTo(0, 0);
@@ -172,16 +173,16 @@ const App = {
 
         // Mobile menu toggle
         document.getElementById('menu-toggle')?.addEventListener('click', () => {
-            document.getElementById('sidebar')?.classList.toggle('open');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar?.classList.toggle('open');
+            overlay?.classList.toggle('active');
         });
 
         // Close sidebar on overlay click (mobile)
-        document.addEventListener('click', (e) => {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.getElementById('menu-toggle');
-            if (sidebar?.classList.contains('open') && !sidebar.contains(e.target) && !toggle?.contains(e.target)) {
-                sidebar.classList.remove('open');
-            }
+        document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+            document.getElementById('sidebar')?.classList.remove('open');
+            document.getElementById('sidebar-overlay')?.classList.remove('active');
         });
 
         // Modal close
