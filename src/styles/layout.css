@@ -310,11 +310,14 @@
     }
 
     .menu-toggle {
-        display: flex;
+        display: flex !important;
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         z-index: 101;
+        visibility: visible;
+        opacity: 1;
+        color: var(--text-primary);
     }
 
     .period-filters {
@@ -322,36 +325,36 @@
     }
 
     .content-area {
-        padding: 0 var(--space-4) var(--space-4);
+        padding: var(--space-2) var(--space-4) var(--space-4);
     }
 
     .topbar {
-        padding: var(--space-4) var(--space-6);
-        gap: var(--space-3);
+        padding: var(--space-2) var(--space-4);
+        gap: var(--space-2);
+        height: 60px;
+        position: sticky;
+        top: 0;
+        background: var(--bg-main);
+        z-index: 100;
     }
     
-    .search-box {
-        min-width: 0;
+    .topbar-left {
+        gap: var(--space-2);
         flex: 1;
+    }
+
+    .search-box {
+        display: none; /* Hide on small screens to save space */
     }
 }
 
 @media (max-width: 640px) {
     .topbar {
-        padding: var(--space-3) var(--space-4);
-    }
-
-    .search-box {
-        padding: var(--space-1) var(--space-3);
-    }
-    
-    .search-box input {
-        width: 60px;
-        font-size: var(--font-size-sm);
+        padding: var(--space-2) var(--space-3);
     }
 
     .page-title {
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-md);
     }
     
     .user-avatar .avatar-circle {
