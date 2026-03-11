@@ -1,0 +1,17 @@
+{
+  "name": "FinanzApp - Control de Finanzas",
+  "short_name": "FinanzApp",
+  "description": "Aplicación para finanzas personales",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2F80ED",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
