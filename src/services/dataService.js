@@ -40,7 +40,7 @@ const DataService = {
         if (this.useLocalStorage) {
             return this._get(this.KEYS.CATEGORIES);
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('categories')
             .select('*')
             .order('created_at', { ascending: true });
@@ -60,7 +60,7 @@ const DataService = {
         if (this.useLocalStorage) {
             return this._get(this.KEYS.CATEGORIES).find(c => c.id === id);
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('categories')
             .select('*')
             .eq('id', id)
@@ -84,7 +84,7 @@ const DataService = {
             this._set(this.KEYS.CATEGORIES, categories);
             return newCat;
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('categories')
             .insert({
                 user_id: this._getUserId(),
@@ -111,7 +111,7 @@ const DataService = {
         if (updates.nombre !== undefined) dbUpdates.nombre = updates.nombre;
         if (updates.icono !== undefined) dbUpdates.icono = updates.icono;
         if (updates.color !== undefined) dbUpdates.color = updates.color;
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('categories')
             .update(dbUpdates)
             .eq('id', id);
@@ -124,7 +124,7 @@ const DataService = {
             this._set(this.KEYS.CATEGORIES, categories);
             return;
         }
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('categories')
             .delete()
             .eq('id', id);
@@ -138,7 +138,7 @@ const DataService = {
         if (this.useLocalStorage) {
             return this._get(this.KEYS.TRANSACTIONS).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('transactions')
             .select('*')
             .order('fecha', { ascending: false });
@@ -173,7 +173,7 @@ const DataService = {
                 return d >= new Date(startDate) && d <= new Date(endDate);
             }).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('transactions')
             .select('*')
             .gte('fecha', startDate)
@@ -206,7 +206,7 @@ const DataService = {
             this._set(this.KEYS.TRANSACTIONS, transactions);
             return newTx;
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('transactions')
             .insert({
                 user_id: this._getUserId(),
@@ -253,7 +253,7 @@ const DataService = {
         if (updates.descripcion !== undefined) dbUpdates.descripcion = updates.descripcion;
         if (updates.metodoPago !== undefined) dbUpdates.metodo_pago = updates.metodoPago;
         if (updates.fuente !== undefined) dbUpdates.fuente = updates.fuente;
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('transactions')
             .update(dbUpdates)
             .eq('id', id);
@@ -266,7 +266,7 @@ const DataService = {
             this._set(this.KEYS.TRANSACTIONS, transactions);
             return;
         }
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('transactions')
             .delete()
             .eq('id', id);
@@ -280,7 +280,7 @@ const DataService = {
         if (this.useLocalStorage) {
             return this._get(this.KEYS.GOALS);
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('goals')
             .select('*')
             .order('created_at', { ascending: true });
@@ -309,7 +309,7 @@ const DataService = {
             this._set(this.KEYS.GOALS, goals);
             return newGoal;
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('goals')
             .insert({
                 user_id: this._getUserId(),
@@ -348,7 +348,7 @@ const DataService = {
         if (updates.montoObjetivo !== undefined) dbUpdates.monto_objetivo = parseFloat(updates.montoObjetivo);
         if (updates.montoActual !== undefined) dbUpdates.monto_actual = parseFloat(updates.montoActual);
         if (updates.fechaObjetivo !== undefined) dbUpdates.fecha_objetivo = updates.fechaObjetivo;
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('goals')
             .update(dbUpdates)
             .eq('id', id);
@@ -361,7 +361,7 @@ const DataService = {
             this._set(this.KEYS.GOALS, goals);
             return;
         }
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('goals')
             .delete()
             .eq('id', id);
@@ -382,7 +382,7 @@ const DataService = {
             return;
         }
         // Fetch current goal first
-        const { data: goal, error: fetchError } = await supabase
+        const { data: goal, error: fetchError } = await supabaseClient
             .from('goals')
             .select('monto_actual, monto_objetivo')
             .eq('id', id)
@@ -392,7 +392,7 @@ const DataService = {
             parseFloat(goal.monto_actual || 0) + parseFloat(amount),
             parseFloat(goal.monto_objetivo)
         );
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('goals')
             .update({ monto_actual: newAmount })
             .eq('id', id);
@@ -406,7 +406,7 @@ const DataService = {
         if (this.useLocalStorage) {
             return this._get(this.KEYS.BUDGETS);
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('budgets')
             .select('*')
             .order('created_at', { ascending: true });
@@ -432,7 +432,7 @@ const DataService = {
             this._set(this.KEYS.BUDGETS, budgets);
             return newBudget;
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('budgets')
             .insert({
                 user_id: this._getUserId(),
@@ -464,7 +464,7 @@ const DataService = {
         const dbUpdates = {};
         if (updates.categoriaId !== undefined) dbUpdates.categoria_id = updates.categoriaId;
         if (updates.limite !== undefined) dbUpdates.limite = parseFloat(updates.limite);
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('budgets')
             .update(dbUpdates)
             .eq('id', id);
@@ -477,7 +477,7 @@ const DataService = {
             this._set(this.KEYS.BUDGETS, budgets);
             return;
         }
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('budgets')
             .delete()
             .eq('id', id);
