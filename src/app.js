@@ -61,6 +61,10 @@ const App = {
         this.isNavigating = true;
         const currentNavVersion = ++this.navVersion;
 
+        // Immediately close mobile sidebar and overlay to improve responsiveness
+        document.getElementById('sidebar')?.classList.remove('open');
+        document.getElementById('sidebar-overlay')?.classList.remove('active');
+
         try {
             if (!this.pages[page]) page = 'dashboard';
             
@@ -130,10 +134,6 @@ const App = {
             const pageModule = this.pages[page].module();
             await pageModule.render();
 
-            // Close mobile sidebar and overlay
-            document.getElementById('sidebar')?.classList.remove('open');
-            document.getElementById('sidebar-overlay')?.classList.remove('active');
-
             // Scroll to top
             document.getElementById('content-area')?.scrollTo(0, 0);
         } finally {
@@ -146,34 +146,62 @@ const App = {
         if (!userInfoEl) return;
         
         const isGuest = DataService.useLocalStorage;
-        
+        let displayName = '';
+        let displayEmail = '';
+        let letter = '';
+        let avatarBg = '';
+        let avatarColor = '';
+
         if (isGuest) {
-            userInfoEl.innerHTML = `
-                <div style="text-align:right;">
-                    <strong style="display:block;font-size:14px;color:var(--text-primary)">Modo Invitado</strong>
-                    <span style="font-size:12px;color:var(--text-tertiary)">Cuentas locales</span>
-                </div>
-                <div class="user-avatar" style="background:var(--border-color); color:var(--text-secondary)">
-                    👻
-                </div>
-                <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Salir del modo invitado">→</button>
-            `;
+            displayName = 'Modo Invitado';
+            displayEmail = 'Cuentas locales';
+            letter = '👻';
+            avatarBg = 'var(--border-color)';
+            avatarColor = 'var(--text-secondary)';
         } else {
             const session = await AuthService.getSession();
-            const email = session?.user?.email || 'Usuario';
-            const letter = email.charAt(0).toUpperCase();
+            displayEmail = session?.user?.email || 'Usuario';
+            displayName = displayEmail.split('@')[0];
+            letter = displayEmail.charAt(0).toUpperCase();
+            avatarBg = 'var(--primary)';
+            avatarColor = 'white';
+        }
 
-            userInfoEl.innerHTML = `
-                <div style="text-align:right;">
-                    <strong style="display:block;font-size:14px;color:var(--text-primary)">${email}</strong>
-                    <span style="font-size:12px;color:var(--success)">Conectado</span>
+        userInfoEl.innerHTML = `
+            <div class="user-profile-container" id="profile-menu-trigger">
+                <div class="user-info-text">
+                    <strong style="display:block;font-size:14px;color:var(--text-primary)">${displayName}</strong>
+                    <span style="font-size:12px;color:var(--text-tertiary)">${isGuest ? 'Invitado' : 'Conectado'}</span>
                 </div>
-                <div class="user-avatar" style="background:var(--primary); color:white">
+                <div class="user-avatar" style="background:${avatarBg}; color:${avatarColor}">
                     ${letter}
                 </div>
-                <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Cerrar Sessión">→</button>
-            `;
-        }
+                
+                <div class="profile-dropdown" id="profile-dropdown">
+                    <div class="dropdown-header">
+                        <strong style="display:block;font-size:14px;">${displayName}</strong>
+                        <span class="dropdown-email">${displayEmail}</span>
+                    </div>
+                    <button class="dropdown-item" onclick="App.navigate('dashboard')">
+                        <span>🏠</span> Inicio
+                    </button>
+                    <button class="dropdown-item logout" onclick="App.logout()">
+                        <span>🚪</span> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Bind toggle event directly after rendering
+        document.getElementById('profile-menu-trigger')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleProfileMenu();
+        });
+    },
+
+    toggleProfileMenu() {
+        const dropdown = document.getElementById('profile-dropdown');
+        dropdown?.classList.toggle('active');
     },
 
     async logout() {
@@ -232,6 +260,14 @@ const App = {
             btn.addEventListener('click', () => {
                 this.setTheme(btn.dataset.theme);
             });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            const dropdown = document.getElementById('profile-dropdown');
+            if (dropdown?.classList.contains('active')) {
+                dropdown.classList.remove('active');
+            }
         });
 
         // Period filter buttons (re-render current page)

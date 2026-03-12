@@ -30,6 +30,17 @@ const Helpers = {
      * Format date to locale string
      */
     formatDate(dateStr) {
+        if (!dateStr) return '—';
+        // Handle YYYY-MM-DD format manually to avoid UTC shift
+        if (typeof dateStr === 'string' && dateStr.includes('-')) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
         const date = new Date(dateStr);
         return date.toLocaleDateString('es-ES', {
             day: '2-digit',
@@ -42,15 +53,28 @@ const Helpers = {
      * Format date for input fields
      */
     formatDateInput(dateStr) {
+        if (!dateStr) return '';
         const d = new Date(dateStr);
-        return d.toISOString().split('T')[0];
+        // If it's a date-only string, return as is
+        if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+            return dateStr;
+        }
+        // Otherwise format to YYYY-MM-DD local
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     },
 
     /**
      * Get current date as YYYY-MM-DD
      */
     today() {
-        return new Date().toISOString().split('T')[0];
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     },
 
     /**
