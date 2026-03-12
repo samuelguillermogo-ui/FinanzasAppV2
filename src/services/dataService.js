@@ -501,6 +501,13 @@ const DataService = {
     // ==========================================
     // AGGREGATIONS
     // ==========================================
+    async getTotalsByDateRange(startDate, endDate) {
+        const transactions = await this.getTransactionsByDateRange(startDate, endDate);
+        const ingresos = transactions.filter(t => t.tipo === 'ingreso').reduce((s, t) => s + t.monto, 0);
+        const gastos = transactions.filter(t => t.tipo === 'gasto').reduce((s, t) => s + t.monto, 0);
+        return { ingresos, gastos, ahorro: ingresos - gastos };
+    },
+
     async getMonthlyTotals(year, month) {
         const start = new Date(year, month, 1);
         const end = new Date(year, month + 1, 0);
