@@ -154,7 +154,7 @@ const AuthPage = {
             }
 
             // Auth state change will trigger navigation
-            App.handleAuthReady();
+            await App.handleAuthReady();
         } catch (error) {
             const messages = {
                 'Invalid login credentials': 'Email o contraseña incorrectos.',
@@ -182,12 +182,12 @@ const AuthPage = {
         }
     },
 
-    enterGuestMode() {
+    async enterGuestMode() {
         // Set guest mode flag and use localStorage DataService
         localStorage.setItem('finanzapp_guest_mode', 'true');
         DataService.setAuthMode(true);
         DataService.seedIfEmpty();
         Helpers.showToast('Modo demo activado. Tus datos se guardan localmente.', 'success');
-        App.handleAuthReady();
+        await App.handleAuthReady();
     }
 };

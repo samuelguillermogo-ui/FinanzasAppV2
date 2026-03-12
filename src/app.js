@@ -52,17 +52,22 @@ const App = {
         await this.navigate(hash);
     },
 
+    isNavigating: false,
     async navigate(page) {
-        if (!this.pages[page]) page = 'dashboard';
-        
-        // Auth check before entering a protected page
-        if (page !== 'auth') {
-            const isGuest = localStorage.getItem('finanzapp_guest_mode') === 'true';
-            const session = await AuthService.getSession();
-            if (!session && !isGuest) {
-                page = 'auth';
+        if (this.isNavigating) return;
+        this.isNavigating = true;
+
+        try {
+            if (!this.pages[page]) page = 'dashboard';
+            
+            // Auth check before entering a protected page
+            if (page !== 'auth') {
+                const isGuest = localStorage.getItem('finanzapp_guest_mode') === 'true';
+                const session = await AuthService.getSession();
+                if (!session && !isGuest) {
+                    page = 'auth';
+                }
             }
-        }
 
         this.currentPage = page;
 
@@ -98,16 +103,19 @@ const App = {
         const titleEl = document.getElementById('page-title');
         if (titleEl) titleEl.textContent = this.pages[page].title;
 
-        // Render page
-        const pageModule = this.pages[page].module();
-        await pageModule.render();
+            // Render page
+            const pageModule = this.pages[page].module();
+            await pageModule.render();
 
-        // Close mobile sidebar and overlay
-        document.getElementById('sidebar')?.classList.remove('open');
-        document.getElementById('sidebar-overlay')?.classList.remove('active');
+            // Close mobile sidebar and overlay
+            document.getElementById('sidebar')?.classList.remove('open');
+            document.getElementById('sidebar-overlay')?.classList.remove('active');
 
-        // Scroll to top
-        document.getElementById('content-area')?.scrollTo(0, 0);
+            // Scroll to top
+            document.getElementById('content-area')?.scrollTo(0, 0);
+        } finally {
+            this.isNavigating = false;
+        }
     },
 
     async renderUserStatus() {
@@ -230,9 +238,19 @@ const App = {
     },
 
     async handleAuthReady() {
-        // Force session refresh
-        await AuthService.getSession();
-        this.navigate('dashboard');
+        // Force session refresh and setup correct DataService mode
+        const session = await AuthService.getSession();
+        const isGuest = localStorage.getItem('finanzapp_guest_mode') === 'true';
+        
+        if (session) {
+            DataService.setAuthMode(false);
+            await DataService.seedIfEmpty();
+        } else if (isGuest) {
+            DataService.setAuthMode(true);
+            await DataService.seedIfEmpty();
+        }
+
+        await this.navigate('dashboard');
     }
 };
 
