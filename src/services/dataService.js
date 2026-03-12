@@ -549,16 +549,24 @@ const DataService = {
     // ==========================================
     // SEED DATA (only for guest/demo mode)
     // ==========================================
+    isSeeding: false,
     async seedIfEmpty() {
-        if (this.useLocalStorage) {
-            if (localStorage.getItem(this.KEYS.INITIALIZED)) return;
-            this.seedLocalStorage();
-        } else {
-            // Check if user has categories, if not, they probably need defaults
-            const categories = await this.getCategories();
-            if (categories.length === 0) {
-                await this.seedSupabaseCategories();
+        if (this.isSeeding) return;
+        this.isSeeding = true;
+        try {
+            if (this.useLocalStorage) {
+                if (localStorage.getItem(this.KEYS.INITIALIZED)) return;
+                console.log('Seeding LocalStorage demo data...');
+                this.seedLocalStorage();
+            } else {
+                const categories = await this.getCategories();
+                if (categories.length === 0) {
+                    console.log('Seeding Supabase default categories...');
+                    await this.seedSupabaseCategories();
+                }
             }
+        } finally {
+            this.isSeeding = false;
         }
     },
 

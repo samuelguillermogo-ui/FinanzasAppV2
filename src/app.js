@@ -5,6 +5,7 @@
 
 const App = {
     currentPage: 'dashboard',
+    navVersion: 0,
 
     pages: {
         dashboard: { title: 'Dashboard', module: () => DashboardPage },
@@ -56,17 +57,26 @@ const App = {
     async navigate(page) {
         if (this.isNavigating) return;
         this.isNavigating = true;
+        const currentNavVersion = ++this.navVersion;
 
         try {
             if (!this.pages[page]) page = 'dashboard';
             
             // Auth check before entering a protected page
+            let session = null;
+            const isGuest = localStorage.getItem('finanzapp_guest_mode') === 'true';
+            
             if (page !== 'auth') {
-                const isGuest = localStorage.getItem('finanzapp_guest_mode') === 'true';
-                const session = await AuthService.getSession();
+                session = await AuthService.getSession();
                 if (!session && !isGuest) {
                     page = 'auth';
                 }
+            }
+
+            // Version check: if another navigation started, abort this one
+            if (currentNavVersion !== this.navVersion) {
+                console.log(`Navigation to ${page} aborted: newer navigation in progress.`);
+                return;
             }
 
         this.currentPage = page;
@@ -85,10 +95,18 @@ const App = {
             if (sidebar) sidebar.style.display = 'none';
             if (header) header.style.display = 'none';
             document.documentElement.style.setProperty('--sidebar-width', '0px');
+            document.body.classList.add('auth-view');
         } else {
-            if (sidebar) sidebar.style.display = 'flex';
-            if (header) header.style.display = 'flex';
+            if (sidebar) {
+                sidebar.style.display = 'flex';
+                sidebar.style.visibility = 'visible';
+            }
+            if (header) {
+                header.style.display = 'flex';
+                header.style.visibility = 'visible';
+            }
             document.documentElement.style.setProperty('--sidebar-width', '250px');
+            document.body.classList.remove('auth-view');
             
             // Update nav active state
             document.querySelectorAll('.nav-item').forEach(item => {
@@ -98,6 +116,9 @@ const App = {
             // Render user status on topbar
             await this.renderUserStatus();
         }
+
+        // Version check again before rendering heavy modules
+        if (currentNavVersion !== this.navVersion) return;
 
         // Update page title
         const titleEl = document.getElementById('page-title');
@@ -239,15 +260,21 @@ const App = {
 
     async handleAuthReady() {
         // Force session refresh and setup correct DataService mode
+        console.log('Auth ready triggered, synchronizing state...');
         const session = await AuthService.getSession();
         const isGuest = localStorage.getItem('finanzapp_guest_mode') === 'true';
         
         if (session) {
+            console.log('Authenticated session found.');
             DataService.setAuthMode(false);
             await DataService.seedIfEmpty();
         } else if (isGuest) {
+            console.log('Guest mode active.');
             DataService.setAuthMode(true);
             await DataService.seedIfEmpty();
+        } else {
+            console.log('No session or guest mode, redirecting to auth.');
+            return this.navigate('auth');
         }
 
         await this.navigate('dashboard');
