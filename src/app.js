@@ -6,6 +6,7 @@
 const App = {
     currentPage: 'dashboard',
     navVersion: 0,
+    initialized: false,
 
     pages: {
         dashboard: { title: 'Dashboard', module: () => DashboardPage },
@@ -51,6 +52,7 @@ const App = {
 
         // Navigate to initial page
         await this.navigate(hash);
+        this.initialized = true;
     },
 
     isNavigating: false,
@@ -250,8 +252,8 @@ const App = {
             btn.classList.toggle('active', btn.dataset.theme === theme);
         });
 
-        // Re-render charts if on a page that has them
-        if (['dashboard', 'reports'].includes(this.currentPage)) {
+        // Re-render charts ONLY if fully initialized and on a page that has them
+        if (this.initialized && ['dashboard', 'reports'].includes(this.currentPage)) {
             ChartService.destroyAll();
             const pageModule = this.pages[this.currentPage].module();
             pageModule.render();
