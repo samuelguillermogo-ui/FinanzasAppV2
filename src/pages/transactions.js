@@ -3,7 +3,7 @@
    ============================================= */
 
 const TransactionsPage = {
-    currentFilters: { tipo: 'todos', categoriaId: 'todos', search: '' },
+    currentFilters: { tipo: 'todos', categoriaId: 'todos' },
 
     async render() {
         const content = document.getElementById('content-area');
@@ -13,17 +13,6 @@ const TransactionsPage = {
         
         content.innerHTML = `
             <div class="transactions-header">
-                <div class="filter-bar">
-                    <select class="form-input" id="filter-type">
-                        <option value="todos">Todos los tipos</option>
-                        <option value="ingreso">Ingresos</option>
-                        <option value="gasto">Gastos</option>
-                    </select>
-                    <select class="form-input" id="filter-category">
-                        <option value="todos">Todas las categorías</option>
-                        ${categories.map(c => `<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join('')}
-                    </select>
-                    <input type="text" class="form-input" id="filter-search" placeholder="Buscar transacción..." style="min-width: 200px;">
                 </div>
                 <button class="btn btn-primary" id="btn-add-transaction">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -44,15 +33,18 @@ const TransactionsPage = {
     },
 
     async renderTable() {
-        let transactions = await DataService.getTransactions();
+        const { start, end } = App.getFilterRange();
+        let transactions = await DataService.getTransactionsByDateRange(start, end);
         const categories = await DataService.getCategories();
         const f = this.currentFilters;
 
-        // Apply filters
+        // Apply local filters (type/category)
         if (f.tipo !== 'todos') transactions = transactions.filter(t => t.tipo === f.tipo);
         if (f.categoriaId !== 'todos') transactions = transactions.filter(t => t.categoriaId === f.categoriaId);
-        if (f.search) {
-            const s = f.search.toLowerCase();
+        
+        // Apply global search
+        if (App.filterState.search) {
+            const s = App.filterState.search.toLowerCase();
             transactions = transactions.filter(t => t.descripcion.toLowerCase().includes(s));
         }
 
@@ -123,10 +115,6 @@ const TransactionsPage = {
             this.currentFilters.categoriaId = e.target.value;
             this.refreshTable();
         });
-        document.getElementById('filter-search')?.addEventListener('input', Helpers.debounce((e) => {
-            this.currentFilters.search = e.target.value;
-            this.refreshTable();
-        }, 200));
     },
 
     async refreshTable() {

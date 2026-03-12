@@ -7,6 +7,12 @@ const App = {
     currentPage: 'dashboard',
     navVersion: 0,
     initialized: false,
+    filterState: {
+        period: 'month',
+        customStart: null,
+        customEnd: null,
+        search: ''
+    },
 
     pages: {
         dashboard: { title: 'Dashboard', module: () => DashboardPage },
@@ -141,6 +147,33 @@ const App = {
         }
     },
 
+    getFilterRange() {
+        const s = this.filterState;
+        const now = new Date();
+        let start = '';
+        let end = new Date().toISOString().split('T')[0];
+
+        if (s.period === 'week') {
+            const d = new Date();
+            d.setDate(d.getDate() - 7);
+            start = d.toISOString().split('T')[0];
+        } else if (s.period === 'month') {
+            start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+        } else if (s.period === 'year') {
+            start = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+        } else if (s.period === 'custom' && s.customStart && s.customEnd) {
+            start = s.customStart;
+            end = s.customEnd;
+        } else {
+            // Default to month if custom not set
+            start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+        }
+
+        return { start, end };
+    },
+
     async renderUserStatus() {
         const userInfoEl = document.getElementById('user-info-display');
         if (!userInfoEl) return;
@@ -273,11 +306,63 @@ const App = {
         // Period filter buttons (re-render current page)
         document.querySelectorAll('.period-btn').forEach(btn => {
             btn.addEventListener('click', () => {
+                const period = btn.dataset.period;
+                
+                if (period === 'custom') {
+                    this.openCustomDateModal();
+                    return;
+                }
+
+                this.filterState.period = period;
                 document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                // Re-render current page with new period
                 this.navigate(this.currentPage);
             });
+        });
+
+        // Global Search
+        document.getElementById('search-input')?.addEventListener('input', Helpers.debounce((e) => {
+            this.filterState.search = e.target.value;
+            this.navigate(this.currentPage);
+        }, 300));
+    },
+
+    openCustomDateModal() {
+        const html = `
+            <div class="form-group">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-input" id="custom-start-date" value="${this.filterState.customStart || Helpers.today()}">
+            </div>
+            <div class="form-group" style="margin-top: var(--space-4)">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" class="form-input" id="custom-end-date" value="${this.filterState.customEnd || Helpers.today()}">
+            </div>
+            <div style="margin-top: var(--space-6); display: flex; gap: var(--space-3); justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="Helpers.closeModal()">Cancelar</button>
+                <button class="btn btn-primary" id="btn-apply-custom-dates">Aplicar Filtro</button>
+            </div>
+        `;
+        Helpers.openModal('Filtrar por Fecha', html);
+
+        document.getElementById('btn-apply-custom-dates')?.addEventListener('click', () => {
+            const start = document.getElementById('custom-start-date').value;
+            const end = document.getElementById('custom-end-date').value;
+            
+            if (!start || !end) {
+                Helpers.showToast('Por favor selecciona ambas fechas', 'warning');
+                return;
+            }
+
+            this.filterState.period = 'custom';
+            this.filterState.customStart = start;
+            this.filterState.customEnd = end;
+
+            // Update UI
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-period-custom')?.classList.add('active');
+            
+            Helpers.closeModal();
+            this.navigate(this.currentPage);
         });
     },
 

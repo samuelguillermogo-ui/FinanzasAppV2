@@ -7,16 +7,12 @@ const ReportsPage = {
         const content = document.getElementById('content-area');
         content.innerHTML = '<div style="display:flex;justify-content:center;padding:3rem;"><span class="spinner"></span></div>';
 
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-        const totals = await DataService.getMonthlyTotals(currentYear, currentMonth);
+        const { start, end } = App.getFilterRange();
+        const totals = await DataService.getTotalsByDateRange(start, end);
         const categories = await DataService.getCategories();
 
-        // Get expenses by category for current month
-        const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
-        const endOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
-        const expByCategory = await DataService.getExpensesByCategory(startOfMonth, endOfMonth);
+        // Get expenses by category for filtered range
+        const expByCategory = await DataService.getExpensesByCategory(start, end);
 
         // Sort categories by expense amount
         const sortedCategories = Object.entries(expByCategory)
@@ -32,7 +28,7 @@ const ReportsPage = {
         content.innerHTML = `
             <div class="transactions-header" style="margin-bottom: var(--space-6);">
                 <div>
-                    <p class="text-secondary">Reporte de ${Helpers.getFullMonthName(currentMonth)} ${currentYear}</p>
+                    <p class="text-secondary">${App.filterState.period === 'custom' ? `Rango: ${Helpers.formatDate(start)} - ${Helpers.formatDate(end)}` : `Reporte de ${App.filterState.period === 'week' ? 'última semana' : Helpers.getFullMonthName(new Date(start).getMonth()) + ' ' + new Date(start).getFullYear()}`}</p>
                 </div>
                 <button class="btn btn-primary" id="btn-export-csv" tabindex="0">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -115,9 +111,9 @@ const ReportsPage = {
         // Bind export
         document.getElementById('btn-export-csv')?.addEventListener('click', () => this.exportCSV());
 
-        // Render charts asynchronously
+        // Render charts asynchronously with filtered range
         await ChartService.createReportBar('chart-report-bar', totals);
-        await ChartService.createCategoryDonut('chart-report-donut', startOfMonth, endOfMonth);
+        await ChartService.createCategoryDonut('chart-report-donut', start, end);
     },
 
     async exportCSV() {
@@ -125,9 +121,7 @@ const ReportsPage = {
             const btn = document.getElementById('btn-export-csv');
             if(btn) btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;"></span> Exportando...';
 
-            const now = new Date();
-            const startStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-            const endStr = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            const { start: startStr, end: endStr } = App.getFilterRange();
             
             const transactions = await DataService.getTransactionsByDateRange(startStr, endStr);
             const categories = await DataService.getCategories();
@@ -144,8 +138,8 @@ const ReportsPage = {
                 };
             });
 
-            const monthName = Helpers.getFullMonthName(now.getMonth());
-            Helpers.exportCSV(exportData, `reporte_${monthName}_${now.getFullYear()}.csv`);
+            const monthName = App.filterState.period === 'custom' ? 'personalizado' : Helpers.getFullMonthName(new Date(startStr).getMonth());
+            Helpers.exportCSV(exportData, `reporte_${monthName}.csv`);
             Helpers.showToast('Reporte exportado en CSV');
             
             if(btn) btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

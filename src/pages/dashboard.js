@@ -7,26 +7,28 @@ const DashboardPage = {
         const content = document.getElementById('content-area');
         content.innerHTML = '<div style="display:flex;justify-content:center;padding:3rem;"><span class="spinner"></span></div>';
 
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-        const totals = await DataService.getMonthlyTotals(currentYear, currentMonth);
+        const { start, end } = App.getFilterRange();
+        const totals = await DataService.getTotalsByDateRange(start, end);
         const balance = await DataService.getTotalBalance();
-        const prevTotals = await DataService.getMonthlyTotals(currentYear, currentMonth - 1);
+        
+        // Calculate changes (keep comparing current vs prev month for simplicity 
+        // in metric cards, or update to reflect current filter later)
+        const prevMonthDate = new Date();
+        prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+        const prevTotals = await DataService.getMonthlyTotals(prevMonthDate.getFullYear(), prevMonthDate.getMonth());
 
-        // Calculate changes
         const incomeChange = prevTotals.ingresos > 0 ? ((totals.ingresos - prevTotals.ingresos) / prevTotals.ingresos * 100).toFixed(1) : 0;
         const expenseChange = prevTotals.gastos > 0 ? ((totals.gastos - prevTotals.gastos) / prevTotals.gastos * 100).toFixed(1) : 0;
         const savingsChange = prevTotals.ahorro !== 0 ? ((totals.ahorro - prevTotals.ahorro) / Math.abs(prevTotals.ahorro) * 100).toFixed(1) : 0;
 
-        // Recent transactions
-        const allTx = await DataService.getTransactions();
+        // Recent transactions filtered by search
+        let allTx = await DataService.getTransactionsByDateRange(start, end);
+        if (App.filterState.search) {
+            const s = App.filterState.search.toLowerCase();
+            allTx = allTx.filter(t => t.descripcion.toLowerCase().includes(s));
+        }
         const recentTx = allTx.slice(0, 6);
         const categories = await DataService.getCategories();
-
-        // Date range for charts (current month)
-        const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
-        const endOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
 
         content.innerHTML = `
             <!-- Metric Cards -->
@@ -123,9 +125,9 @@ const DashboardPage = {
             </div>
         `;
 
-        // Render charts asynchronously
+        // Render charts asynchronously with filter range
         await ChartService.createIncomeVsExpenseBar('chart-income-expense', 6);
-        await ChartService.createCategoryDonut('chart-category-donut', startOfMonth, endOfMonth);
+        await ChartService.createCategoryDonut('chart-category-donut', start, end);
         await ChartService.createEvolutionArea('chart-evolution', 6);
     }
 };
